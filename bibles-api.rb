@@ -3,15 +3,19 @@ require './api-key.rb' #loads BIBLE_KEY
 
 require 'cgi'
 require 'curb'
-require 'json'
+require 'nokogiri'
+require 'pp'
 
 # globals
 API_BASE = 'http://bibles.org/'
 VERSIONS = 'ESV,KJV,NASB'
-SEARCH_API = API_BASE + '/' + VERSIONS + '/passages.js'
+
+# http://bibles.org/pages/api/documentation/passages
+# maximum of 3 returned verses for this api
+PASSAGES_API = API_BASE + '/' + VERSIONS + '/passages.xml'
 
 def get_search_url(verse_reference)
-  url = SEARCH_API + '?&q[]=' + CGI.escape(verse_reference)
+  url = PASSAGES_API + '?&q[]=' + CGI.escape(verse_reference)
   return url 
 end
 
@@ -19,7 +23,15 @@ def get_search_result(url)
   c = Curl::Easy.new(url)
   c.userpwd = BIBLE_KEY + ':X'
   c.perform
-  puts c.body_str
+  return c.body_str
+end
+
+def print_passage(passage)
+  version = passage.at_css('version').content
+  ref     = passage.at_css('display').content
+  text    = passage.at_css('text_preview').content
+
+  puts "#{ref} (#{version}): #{text}"
 end
 
 #TMS specific stuff to refactor later
@@ -34,6 +46,14 @@ d = ["Matthew 6:33", "Luke 9:23", "1 John 2:15-16", "Romans 12:2", "1 Corinthian
 e = ["John 13:34-35", "1 John 3:18", "Philippians 2:3-4", "1 Peter 5:5-6", "Ephesians 5:3", "1 Peter 2:11", "Leviticus 19:11", "Acts 24:16", "Hebrews 11:6", "Romans 4:20-21", "Galatians 6:9-10", "Matthew 5:16"]
 
 full_pack_list = [a,b,c,d,e].join(',')
-
 url = get_search_url(full_pack_list)
-get_search_result(url)
+#url = get_search_url(a[0])
+data = get_search_result(url)
+
+@doc = Nokogiri::XML(data) do |config|
+  config.nocdata
+end
+
+@passages = @doc.css('passages passage')
+@passages.each_entry{|passage| print_passage(passage)}
+
