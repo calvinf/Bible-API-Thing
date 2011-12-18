@@ -3,7 +3,7 @@ require './api-key.rb' #loads BIBLE_KEY
 
 require 'cgi'
 require 'curb'
-#require 'json'
+require 'json'
 
 # globals
 API_BASE = 'http://bibles.org/'
@@ -33,7 +33,7 @@ c = []
 d = []
 e = []
 
-url = get_search_url(a[0])
-puts "URL: " + url
+full_pack_list = a.join(',')
 
+url = get_search_url(full_pack_list)
 get_search_result(url)
