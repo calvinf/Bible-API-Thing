@@ -11,7 +11,7 @@ require 'pp'  #prettyprint (for errors and testing)
 
 # other includes
 require './api-key.rb' #loads BIBLE_KEY
-require './models.rb'  #loads Pack and other models
+require './models/pack.rb'  #loads Pack and other models
 
 # globals
 API_BASE = 'http://bibles.org/'
