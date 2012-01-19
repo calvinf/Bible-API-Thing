@@ -1,10 +1,11 @@
 #!/usr/bin/env ruby
 require './api-key.rb' #loads BIBLE_KEY
 
-require 'cgi'
-require 'curb'
-require 'nokogiri'
-require 'pp'
+require 'cgi'       #escaping
+require 'curb'      #curl wrapper
+require 'dalli'	    #memcached client
+require 'nokogiri'  #xml parsing
+require 'pp'        #prettyprint (for errors)
 
 # globals
 API_BASE = 'http://bibles.org/'
@@ -13,6 +14,10 @@ VERSIONS = 'ESV,KJV,NASB'
 # http://bibles.org/pages/api/documentation/passages
 # maximum of 3 returned verses for this api
 PASSAGES_API = API_BASE + '/' + VERSIONS + '/passages.xml'
+
+#memcached settings
+MEMCACHE_SERVER      = 'localhost:11211'
+MEMCACHE_PACK_PREFIX = 'tms-packs-'
 
 def get_search_url(verse_reference)
   url = PASSAGES_API + '?&q[]=' + CGI.escape(verse_reference)
@@ -46,9 +51,20 @@ d = ["Matthew 6:33", "Luke 9:23", "1 John 2:15-16", "Romans 12:2", "1 Corinthian
 e = ["John 13:34-35", "1 John 3:18", "Philippians 2:3-4", "1 Peter 5:5-6", "Ephesians 5:3", "1 Peter 2:11", "Leviticus 19:11", "Acts 24:16", "Hebrews 11:6", "Romans 4:20-21", "Galatians 6:9-10", "Matthew 5:16"]
 
 full_pack_list = [a,b,c,d,e].join(',')
-url = get_search_url(full_pack_list)
-#url = get_search_url(a[0])
-data = get_search_result(url)
+
+#initialize dalli client
+dc = Dalli::Client.new(MEMCACHE_SERVER) #default memcached port
+
+#right now we're getting all the packs in one go so cache as such
+resp = dc.get(MEMCACHE_PACK_PREFIX + 'all')
+
+if(resp.nil?)
+  url = get_search_url(full_pack_list)
+  data = get_search_result(url)
+  dc.set(TMS_PACK_KEY, data)
+else
+  data = resp
+end
 
 @doc = Nokogiri::XML(data) do |config|
   config.nocdata
