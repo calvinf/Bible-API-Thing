@@ -20,8 +20,11 @@ PASSAGES_API = API_BASE + '/' + VERSIONS + '/passages.xml'
 MEMCACHE_SERVER      = 'localhost:11211'
 MEMCACHE_PACK_PREFIX = 'tms-packs-'
 
-def get_search_url(verse_reference)
-  url = PASSAGES_API + '?&q[]=' + CGI.escape(verse_reference)
+#initialize dalli client
+dc = Dalli::Client.new(MEMCACHE_SERVER) #default memcached port
+
+def get_search_url(verses)
+  url = PASSAGES_API + '?&q[]=' + CGI.escape(verses.join(','))
   return url 
 end
 
@@ -32,6 +35,37 @@ def get_search_result(url)
   return c.body_str
 end
 
+#TODO look adding this method to pack
+# maybe some way to initialize dalli client as a singleton and reuse
+# for all the pack objects
+def get_pack_data(pack, memcached_client)
+  # retrieve pack from memcached if present
+  memcached_key = MEMCACHE_PACK_PREFIX + pack.get_title
+  response = memcached_client.get(memcached_key)
+
+  if(response.nil?)
+    url  = get_search_url(verse_string)
+    data = get_search_result(url)
+
+    #store API query result in memcached
+    memcached_client.set(memcached_key, data)
+  else
+    data = response
+  end
+
+  return data
+end
+
+def get_passages(data)
+  # prepare to parse
+  @doc = Nokogiri::XML(data) do |config|
+    config.nocdata
+  end
+
+  # grab passages
+  return @doc.css('passages passage')
+end
+
 def print_passage(passage)
   version = passage.at_css('version').content
   ref     = passage.at_css('display').content
@@ -39,9 +73,6 @@ def print_passage(passage)
 
   puts "#{ref} (#{version}): #{text}"
 end
-
-#initialize dalli client
-dc = Dalli::Client.new(MEMCACHE_SERVER) #default memcached port
 
 #TMS specific stuff to refactor later
 a = Pack.new('a')
@@ -65,26 +96,8 @@ packs = [a, b, c, d, e]
 
 # loop through each pack
 packs.each do |pack|
-  # retrieve pack from memcached if present
-  mem_key = MEMCACHE_PACK_PREFIX + pack.get_title
-  resp = dc.get(mem_key)
-
-  if(resp.nil?)
-    verse_string = pack.verses.join(',')
-    url = get_search_url(verse_string)
-    data = get_search_result(url)
-    dc.set(mem_key, data)
-  else
-    data = resp
-  end
-
-  # prepare to parse
-  @doc = Nokogiri::XML(data) do |config|
-    config.nocdata
-  end
-
-  # grab passages
-  @passages = @doc.css('passages passage')
+  data      = get_pack_data(pack, dc)
+  @passages = get_passages(data)
 
   # print passages
   @passages.each_entry{|passage| print_passage(passage)}
