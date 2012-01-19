@@ -1,12 +1,17 @@
 #!/usr/bin/env ruby
+
+# using bundler up in here, up in here
+require 'rubygems'
+require 'bundler/setup'
+Bundler.require(:default)
+
+# all the other things we want to use
+require 'cgi' #escaping
+require 'pp'  #prettyprint (for errors and testing)
+
+# other includes
 require './api-key.rb' #loads BIBLE_KEY
 require './models.rb'  #loads Pack and other models
-
-require 'cgi'       #escaping
-require 'curb'      #curl wrapper
-require 'dalli'	    #memcached client
-require 'nokogiri'  #xml parsing
-require 'pp'        #prettyprint (for errors)
 
 # globals
 API_BASE = 'http://bibles.org/'
@@ -16,11 +21,11 @@ VERSIONS = 'ESV,KJV,NASB'
 # maximum of 3 returned verses for this api
 PASSAGES_API = API_BASE + '/' + VERSIONS + '/passages.xml'
 
-#memcached settings
+# memcached settings
 MEMCACHE_SERVER      = 'localhost:11211'
 MEMCACHE_PACK_PREFIX = 'tms-packs-'
 
-#initialize dalli client
+# initialize dalli client
 dc = Dalli::Client.new(MEMCACHE_SERVER) #default memcached port
 
 def get_search_url(verses)
