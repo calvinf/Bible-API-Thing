@@ -40,6 +40,9 @@ def print_passage(passage)
   puts "#{ref} (#{version}): #{text}"
 end
 
+#initialize dalli client
+dc = Dalli::Client.new(MEMCACHE_SERVER) #default memcached port
+
 #TMS specific stuff to refactor later
 a = Pack.new('a')
 b = Pack.new('b')
@@ -58,26 +61,31 @@ d.verses = ["Matthew 6:33", "Luke 9:23", "1 John 2:15-16", "Romans 12:2", "1 Cor
 
 e.verses = ["John 13:34-35", "1 John 3:18", "Philippians 2:3-4", "1 Peter 5:5-6", "Ephesians 5:3", "1 Peter 2:11", "Leviticus 19:11", "Acts 24:16", "Hebrews 11:6", "Romans 4:20-21", "Galatians 6:9-10", "Matthew 5:16"]
 
-full_pack_list = [a.verses,b.verses,c.verses,d.verses,e.verses]
+packs = [a, b, c, d, e]
 
-#initialize dalli client
-dc = Dalli::Client.new(MEMCACHE_SERVER) #default memcached port
+# loop through each pack
+packs.each do |pack|
+  # retrieve pack from memcached if present
+  mem_key = MEMCACHE_PACK_PREFIX + pack.get_title
+  resp = dc.get(mem_key)
 
-#right now we're getting all the packs in one go so cache as such
-resp = dc.get(MEMCACHE_PACK_PREFIX + 'all')
+  if(resp.nil?)
+    verse_string = pack.verses.join(',')
+    url = get_search_url(verse_string)
+    data = get_search_result(url)
+    dc.set(mem_key, data)
+  else
+    data = resp
+  end
 
-if(resp.nil?)
-  url = get_search_url(full_pack_list)
-  data = get_search_result(url)
-  dc.set(TMS_PACK_KEY, data)
-else
-  data = resp
+  # prepare to parse
+  @doc = Nokogiri::XML(data) do |config|
+    config.nocdata
+  end
+
+  # grab passages
+  @passages = @doc.css('passages passage')
+
+  # print passages
+  @passages.each_entry{|passage| print_passage(passage)}
 end
-
-@doc = Nokogiri::XML(data) do |config|
-  config.nocdata
-end
-
-@passages = @doc.css('passages passage')
-@passages.each_entry{|passage| print_passage(passage)}
-

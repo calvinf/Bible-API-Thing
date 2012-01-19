@@ -7,7 +7,7 @@ class Pack
     @title = title
   end
   def get_title
-    puts @title.capitalize
+    return @title.capitalize
   end
   def to_s
     if(defined? @verses)
