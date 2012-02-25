@@ -88,10 +88,7 @@ def distill(passage)
   text.strip!.gsub!(/[\n\t]/, ' ')
   text.gsub!(/\s+/, " ")
 
-  verse = Verse.new(reference, text, translation)
-  puts verse.to_s  
-
-  return verse
+  return Verse.new(reference, text, translation)
 end
 
 #TMS specific stuff to refactor later
@@ -121,6 +118,7 @@ packs.each do |pack|
 
   # print passages
   @passages.each_entry do |passage|
-    distill(passage)
+    verse = distill(passage)
+    puts verse.to_s
   end
 end

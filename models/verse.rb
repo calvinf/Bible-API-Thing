@@ -12,4 +12,12 @@ class Verse
   def to_s
     return "#{@reference} (#{@translation}): #{@text}"
   end
+
+  def to_json(*a)
+    {
+	'reference'   => @reference,
+	'text'        => @text,
+	'translation' => @translation
+    }.to_json(*a)
+  end
 end
