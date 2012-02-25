@@ -28,11 +28,13 @@ MEMCACHE_PACK_PREFIX = 'tms-packs-'
 # initialize dalli client
 dc = Dalli::Client.new(MEMCACHE_SERVER) #default memcached port
 
+# TODO move to BibleSearch class
 def get_search_url(verses)
   url = PASSAGES_API + '?&q[]=' + CGI.escape(verses.join(','))
   return url 
 end
 
+# TODO move to BibleSearch class
 def get_search_result(url)
   c = Curl::Easy.new(url)
   c.userpwd = BIBLE_KEY + ':X'
@@ -49,7 +51,7 @@ def get_pack_data(pack, memcached_client)
   response = memcached_client.get(memcached_key)
 
   if(response.nil?)
-    url  = get_search_url(verse_string)
+    url  = get_search_url(pack.verses)
     data = get_search_result(url)
 
     #store API query result in memcached
