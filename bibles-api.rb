@@ -23,7 +23,7 @@ PASSAGES_API = API_BASE + '/' + VERSIONS + '/passages.xml'
 
 # memcached settings
 MEMCACHE_SERVER      = 'localhost:11211'
-MEMCACHE_PACK_PREFIX = 'tms-packs-'
+MEMCACHE_PREFIX = 'tms-' + VERSIONS.downcase + '-packs-'
 
 # initialize dalli client
 dc = Dalli::Client.new(MEMCACHE_SERVER) #default memcached port
@@ -47,7 +47,7 @@ end
 # for all the pack objects
 def get_pack_data(pack, memcached_client)
   # retrieve pack from memcached if present
-  memcached_key = MEMCACHE_PACK_PREFIX + pack.get_title
+  memcached_key = MEMCACHE_PREFIX + pack.get_title
   response = memcached_client.get(memcached_key)
 
   if(response.nil?)
@@ -73,12 +73,21 @@ def get_passages(data)
   return @doc.css('passages passage')
 end
 
-def print_passage(passage)
+def distill(passage)
+  passage.css('sup').remove
+    
   version = passage.at_css('version').content
   ref     = passage.at_css('display').content
-  text    = passage.at_css('text_preview').content
 
-  puts "#{ref} (#{version}): #{text}"
+  text    = Nokogiri::HTML(passage.at_css('text_preview').content)
+  text.xpath("//sup").remove
+
+  #trim the leading/trailing whitespace, remove linebreaks, remove tabs, remove excessive whitespace
+  verse_output = text.content
+  verse_output.strip!.gsub!(/[\n\t]/, ' ')
+  verse_output.gsub!(/\s+/, " ")
+  
+  puts "#{ref} (#{version}): #{verse_output}"
 end
 
 #TMS specific stuff to refactor later
@@ -107,5 +116,5 @@ packs.each do |pack|
   @passages = get_passages(data)
 
   # print passages
-  @passages.each_entry{|passage| print_passage(passage)}
+  @passages.each_entry{|passage| distill(passage)}
 end
