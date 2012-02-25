@@ -10,8 +10,9 @@ require 'cgi' #escaping
 require 'pp'  #prettyprint (for errors and testing)
 
 # other includes
-require './api-key.rb' #loads BIBLE_KEY
-require './models/pack.rb'  #loads Pack and other models
+require './api-key.rb'		#loads BIBLE_KEY
+require './models/pack.rb'	#loads Pack model
+require './models/verse.rb'	#loads Verse model
 
 # globals
 API_BASE = 'http://bibles.org/'
@@ -76,18 +77,21 @@ end
 def distill(passage)
   passage.css('sup').remove
     
-  version = passage.at_css('version').content
-  ref     = passage.at_css('display').content
+  translation = passage.at_css('version').content
+  reference   = passage.at_css('display').content
 
-  text    = Nokogiri::HTML(passage.at_css('text_preview').content)
-  text.xpath("//sup").remove
+  text_html = Nokogiri::HTML(passage.at_css('text_preview').content)
+  text_html.xpath("//sup").remove
 
   #trim the leading/trailing whitespace, remove linebreaks, remove tabs, remove excessive whitespace
-  verse_output = text.content
-  verse_output.strip!.gsub!(/[\n\t]/, ' ')
-  verse_output.gsub!(/\s+/, " ")
-  
-  puts "#{ref} (#{version}): #{verse_output}"
+  text = text_html.content
+  text.strip!.gsub!(/[\n\t]/, ' ')
+  text.gsub!(/\s+/, " ")
+
+  verse = Verse.new(reference, text, translation)
+  puts verse.to_s  
+
+  return verse
 end
 
 #TMS specific stuff to refactor later
@@ -116,5 +120,7 @@ packs.each do |pack|
   @passages = get_passages(data)
 
   # print passages
-  @passages.each_entry{|passage| distill(passage)}
+  @passages.each_entry do |passage|
+    distill(passage)
+  end
 end
