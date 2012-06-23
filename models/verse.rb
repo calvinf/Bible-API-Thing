@@ -20,4 +20,8 @@ class Verse
 	'translation' => @translation
     }.to_json(*a)
   end
+
+  def cache
+
+  end
 end

@@ -11,20 +11,9 @@ require 'pp'  #prettyprint (for errors and testing)
 
 # other includes
 require './api-key.rb'		#loads BIBLE_KEY
+require './config.rb'
 require './models/pack.rb'	#loads Pack model
 require './models/verse.rb'	#loads Verse model
-
-# globals
-API_BASE = 'http://bibles.org/'
-VERSIONS = 'ESV,KJV,NASB'
-
-# http://bibles.org/pages/api/documentation/passages
-# maximum of 3 returned verses for this api
-PASSAGES_API = API_BASE + '/' + VERSIONS + '/passages.xml'
-
-# memcached settings
-MEMCACHE_SERVER      = 'localhost:11211'
-MEMCACHE_PREFIX = 'tms-' + VERSIONS.downcase + '-packs-'
 
 # initialize dalli client
 dc = Dalli::Client.new(MEMCACHE_SERVER) #default memcached port
@@ -48,7 +37,7 @@ end
 # for all the pack objects
 def get_pack_data(pack, memcached_client)
   # retrieve pack from memcached if present
-  memcached_key = MEMCACHE_PREFIX + pack.get_title
+  memcached_key = MEMCACHE_PREFIX + '-packs-' + pack.get_title
   response = memcached_client.get(memcached_key)
 
   if(response.nil?)
