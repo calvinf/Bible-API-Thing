@@ -10,10 +10,10 @@ require 'cgi' #escaping
 require 'pp'  #prettyprint (for errors and testing)
 
 # other includes
-require './api-key.rb'		#loads BIBLE_KEY
-require './config.rb'
-require './models/pack.rb'	#loads Pack model
-require './models/verse.rb'	#loads Verse model
+require './api-key.rb'		# BIBLE_KEY
+require './config.rb'		# configuration
+require './models/Pack.rb'	# Pack model
+require './models/Verse.rb'	# Verse model
 
 # initialize dalli client
 dc = Dalli::Client.new(MEMCACHE_SERVER) #default memcached port
@@ -63,7 +63,7 @@ def get_passages(data)
   return @doc.css('passages passage')
 end
 
-def distill(passage)
+def distill(passage, client)
   passage.css('sup').remove
     
   translation = passage.at_css('version').content
@@ -77,7 +77,11 @@ def distill(passage)
   text.strip!.gsub!(/[\n\t]/, ' ')
   text.gsub!(/\s+/, " ")
 
-  return Verse.new(reference, text, translation)
+  verse = Verse.new({:reference => reference, :text => text, :translation => translation, :client => client})
+  verse.cache
+  puts verse.cache_key
+
+  return verse
 end
 
 #TMS specific stuff to refactor later
@@ -107,7 +111,7 @@ packs.each do |pack|
 
   # print passages
   @passages.each_entry do |passage|
-    verse = distill(passage)
-    puts verse.to_s
+    verse = distill(passage, dc)
+    #puts verse.to_s
   end
 end
