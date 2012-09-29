@@ -6,12 +6,11 @@ class Pack
     # initialize the pack title (e.g. 'a')
     @title = title
   end
+
   def get_title
     return @title.capitalize
   end
-  def retrieve_data
 
-  end
   def to_s
     if(defined? @verses)
       return @title.capitalize + ': ' + @verses.join(', ')

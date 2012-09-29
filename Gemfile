@@ -1,6 +1,7 @@
 source "http://rubygems.org"
+gem "bson_ext"
 gem "curb", "~> 0.7.18"
-gem "dalli"
 gem "htmlentities"
+gem "mongo_mapper", "~> 0.11.0"
 gem "nokogiri", "~> 1.5.0"
 gem "json", "~> 1.6.5"

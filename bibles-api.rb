@@ -15,75 +15,93 @@ require './config.rb'		# configuration
 require './models/Pack.rb'	# Pack model
 require './models/Verse.rb'	# Verse model
 
-# initialize dalli client
-dc = Dalli::Client.new(MEMCACHE_SERVER) #default memcached port
-coder = HTMLEntities.new
+MongoMapper.connection = Mongo::Connection.new('localhost', 27017)
+MongoMapper.database = "versemachine"
 
 # TODO move to BibleSearch class
 def get_search_url(verses)
-  url = PASSAGES_API + '?&q[]=' + CGI.escape(verses.join(','))
-  return url 
+    url = PASSAGES_API + '?&q[]=' + CGI.escape(verses.join(','))
+    return url 
 end
 
 # TODO move to BibleSearch class
 def get_search_result(url)
-  c = Curl::Easy.new(url)
-  c.userpwd = BIBLE_KEY + ':X'
-  c.perform
-  return c.body_str
+    c = Curl::Easy.new(url)
+    c.userpwd = BIBLE_KEY + ':X'
+    c.perform
+    return c.body_str
 end
 
 #TODO look adding this method to pack
-# maybe some way to initialize dalli client as a singleton and reuse
-# for all the pack objects
-def get_pack_data(pack, memcached_client)
-  # retrieve pack from memcached if present
-  memcached_key = MEMCACHE_PREFIX + '-packs-' + pack.get_title
-  response = memcached_client.get(memcached_key)
+def get_pack_data(pack)
+    versesNeeded = check_for_verses(pack)
 
-  if(response.nil?)
-    url  = get_search_url(pack.verses)
-    data = get_search_result(url)
+    if versesNeeded > 0
+	puts "Verses needed for #{pack.get_title}"
+	url       = get_search_url(pack.verses)
+	data      = get_search_result(url)
+	@passages = get_passages(data)
 
-    #store API query result in memcached
-    memcached_client.set(memcached_key, data)
-  else
-    data = response
-  end
+	# print passages
+	@passages.each_entry do |passage|
+	    verse = distill(passage)
+	    #puts verse.to_s
+	end
+    else
+	puts "Pack #{pack.get_title}: all verses found in MongoDB"
+    end
+end
 
-  return data
+def check_for_verses(pack)
+    # see if the verses are in db or if we need to fetch them
+    versesNeeded = 0
+    pack.verses.each do |reference|
+	cache_key = 'esv::' + reference.downcase.gsub(/\s+/, "")
+	curVerse = Verse.find_by_cache_key(cache_key)
+	if curVerse.nil?
+	    versesNeeded += 1
+	end
+    end
+
+    return versesNeeded
 end
 
 def get_passages(data)
-  # prepare to parse
-  @doc = Nokogiri::XML(data) do |config|
-    config.nocdata
-  end
+    # prepare to parse
+    @doc = Nokogiri::XML(data) do |config|
+	config.nocdata
+    end
 
-  # grab passages
-  return @doc.css('passages passage')
+    # grab passages
+    return @doc.css('passages passage')
 end
 
-def distill(passage, client, coder)
-  passage.css('sup').remove
+def distill(passage)
+    coder = HTMLEntities.new
+
+    passage.css('sup').remove
     
-  translation = passage.at_css('version').content
-  reference   = passage.at_css('display').content
+    translation = passage.at_css('version').content
+    reference   = passage.at_css('display').content
 
-  text_html = Nokogiri::HTML(passage.at_css('text_preview').content)
-  text_html.xpath("//sup").remove
+    text_html = Nokogiri::HTML(passage.at_css('text_preview').content)
+    text_html.xpath("//sup").remove
 
-  #trim the leading/trailing whitespace, remove linebreaks, remove tabs, remove excessive whitespace
-  text = text_html.content
-  text = coder.encode(text)
-  text.strip!.gsub!(/[\n\t]/, ' ')
-  text.gsub!(/\s+/, " ")
+    #trim the leading/trailing whitespace, remove linebreaks, remove tabs, remove excessive whitespace
+    text = text_html.content
+    text = coder.encode(text)
+    text.strip!.gsub!(/[\n\t]/, ' ')
+    text.gsub!(/\s+/, " ")
 
-  verse = Verse.new({:reference => reference, :text => text, :translation => translation, :client => client})
-  verse.cache
-  puts verse.cache_key
+    verse = Verse.create({
+	:reference => reference, 
+	:text => text, 
+	:translation => translation
+    })
+    verse.save!
+    puts verse.to_s
 
-  return verse
+    return verse
 end
 
 #TMS specific stuff to refactor later
@@ -108,12 +126,5 @@ packs = [a, b, c, d, e]
 
 # loop through each pack
 packs.each do |pack|
-  data      = get_pack_data(pack, dc)
-  @passages = get_passages(data)
-
-  # print passages
-  @passages.each_entry do |passage|
-    verse = distill(passage, dc, coder)
-    puts verse.to_s
-  end
+  get_pack_data(pack)
 end
