@@ -17,6 +17,7 @@ require './models/Verse.rb'	# Verse model
 
 # initialize dalli client
 dc = Dalli::Client.new(MEMCACHE_SERVER) #default memcached port
+coder = HTMLEntities.new
 
 # TODO move to BibleSearch class
 def get_search_url(verses)
@@ -63,7 +64,7 @@ def get_passages(data)
   return @doc.css('passages passage')
 end
 
-def distill(passage, client)
+def distill(passage, client, coder)
   passage.css('sup').remove
     
   translation = passage.at_css('version').content
@@ -74,6 +75,7 @@ def distill(passage, client)
 
   #trim the leading/trailing whitespace, remove linebreaks, remove tabs, remove excessive whitespace
   text = text_html.content
+  text = coder.encode(text)
   text.strip!.gsub!(/[\n\t]/, ' ')
   text.gsub!(/\s+/, " ")
 
@@ -111,7 +113,7 @@ packs.each do |pack|
 
   # print passages
   @passages.each_entry do |passage|
-    verse = distill(passage, dc)
-    #puts verse.to_s
+    verse = distill(passage, dc, coder)
+    puts verse.to_s
   end
 end

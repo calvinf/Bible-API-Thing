@@ -1,5 +1,6 @@
 source "http://rubygems.org"
 gem "curb", "~> 0.7.18"
 gem "dalli"
+gem "htmlentities"
 gem "nokogiri", "~> 1.5.0"
 gem "json", "~> 1.6.5"
