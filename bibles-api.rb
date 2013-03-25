@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# using bundler up in here, up in here
+# using bundler http://gembundler.com/
 require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:default)
@@ -10,36 +10,24 @@ require 'cgi' #escaping
 require 'pp'  #prettyprint (for errors and testing)
 
 # other includes
-require './api-key.rb'		# BIBLE_KEY
-require './config.rb'		# configuration
-require './models/Pack.rb'	# Pack model
-require './models/Verse.rb'	# Verse model
+require './api-key.rb'		    # BIBLE_KEY
+require './models/Pack.rb'	    # Pack model
+require './models/Verse.rb'	    # Verse model
+require './models/BibleSearch.rb'   # Bible Search
 
 MongoMapper.connection = Mongo::Connection.new('localhost', 27017)
 MongoMapper.database = "versemachine"
 
-# TODO move to BibleSearch class
-def get_search_url(verses)
-    url = PASSAGES_API + '?&q[]=' + CGI.escape(verses.join(','))
-    return url 
-end
-
-# TODO move to BibleSearch class
-def get_search_result(url)
-    c = Curl::Easy.new(url)
-    c.userpwd = BIBLE_KEY + ':X'
-    c.perform
-    return c.body_str
-end
 
 #TODO look adding this method to pack
 def get_pack_data(pack)
+    bibleSearch = BibleSearch.new()
     versesNeeded = check_for_verses(pack)
 
     if versesNeeded > 0
 	puts "Verses needed for #{pack.get_title}"
-	url       = get_search_url(pack.verses)
-	data      = get_search_result(url)
+	url       = bibleSearch.get_search_url(pack.verses)
+	data      = bibleSearch.get_search_result(url)
 	@passages = get_passages(data)
 
 	# print passages

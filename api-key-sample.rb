@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
 
-# American Bible Society API Key
-# http://bibles.org/pages/api
+# Get an API key for the American Bible Society's API
+# http://bibles.org/pages/api/
 BIBLE_KEY = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'

@@ -1,46 +1,33 @@
 #!/usr/bin/env ruby
 
-# using bundler up in here, up in here
+# using bundler http://gembundler.com/
 require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:default)
 
 # all the other things we want to use
-require 'cgi' #escaping
-require 'pp'  #prettyprint (for errors and testing)
+require 'cgi' # escaping
+require 'pp'  # prettyprint (for errors and testing)
 
 # other includes
-require './api-key.rb'		# BIBLE_KEY
-require './config.rb'		# configuration
-require './models/Pack.rb'	# Pack model
-
-# TODO move to BibleSearch class
-def get_search_url(verses)
-    url = PASSAGES_API + '?&q[]=' + CGI.escape(verses.join(','))
-    return url 
-end
-
-# TODO move to BibleSearch class
-def get_search_result(url)
-    c = Curl::Easy.new(url)
-    c.userpwd = BIBLE_KEY + ':X'
-    c.perform
-    return c.body_str
-end
+require './api-key.rb'		  # BIBLE_KEY
+require './models/BibleSearch.rb' # Bible Search
+require './models/Pack.rb'	  # Pack model
 
 #TODO look adding this method to pack
 def get_pack_data(pack)
-	puts "Verses needed for #{pack.get_title}"
-	url       = get_search_url(pack.verses)
-	data      = get_search_result(url)
-	passages = get_passages(data)
-	
-	verses = [];
-	passages.each do |passage|
-		verses.push(distill(passage))
-		#puts verse.to_s
-	end
-	return verses
+    bibleSearch = BibleSearch.new
+
+    puts "Verses needed for #{pack.get_title}"
+    url      = bibleSearch.get_search_url(pack.verses)
+    data     = bibleSearch.get_search_result(url)
+    passages = get_passages(data)
+
+    verses = []
+    passages.each do |passage|
+	verses.push(distill(passage))
+    end
+    return verses
 end
 
 def get_passages(data)
@@ -48,6 +35,7 @@ def get_passages(data)
     # print data
     doc = Nokogiri::XML(data) 
     @passages =  doc.css('passages passage')
+
     # grab passages
     return @passages
 end
@@ -74,24 +62,23 @@ def distill(passage)
 	:text => text, 
 	:translation => translation
     }
-    #puts verse.to_s
 
     return verse
 end
 
 if(ARGV.size < 1) 
-	print "Please pass in a file\n"
-	exit
+    print "Please pass in a file\n"
+    exit
 end
 
 File.open(ARGV[0]) do |file| 
-	p = Pack.new("prayer")
-	p.verses = file.readlines
-	#puts p.to_s
-	versesWithPassage = get_pack_data(p)
-	versesWithPassage.each do |passage|
-		puts passage[:text]+"\n"
-		puts passage[:reference]+"\n\n"
-	end	
-	file.close
+    p = Pack.new("prayer")
+    p.verses = file.readlines
+
+    versesWithPassage = get_pack_data(p)
+    versesWithPassage.each do |passage|
+	puts passage[:text]+"\n"
+	puts passage[:reference]+"\n\n"
+    end	
+    file.close
 end
