@@ -6,8 +6,7 @@ require 'bundler/setup'
 Bundler.require(:default)
 
 # all the other things we want to use
-require 'cgi' # escaping
-require 'pp'  # prettyprint (for errors and testing)
+require 'pp' # prettyprint (for errors and testing)
 
 # other includes
 require './api-key.rb'		  # BIBLE_KEY

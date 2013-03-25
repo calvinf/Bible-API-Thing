@@ -6,8 +6,7 @@ require 'bundler/setup'
 Bundler.require(:default)
 
 # all the other things we want to use
-require 'cgi' #escaping
-require 'pp'  #prettyprint (for errors and testing)
+require 'pp'  # prettyprint (for errors and testing)
 
 # other includes
 require './api-key.rb'		    # BIBLE_KEY
@@ -17,7 +16,6 @@ require './models/BibleSearch.rb'   # Bible Search
 
 MongoMapper.connection = Mongo::Connection.new('localhost', 27017)
 MongoMapper.database = "versemachine"
-
 
 #TODO look adding this method to pack
 def get_pack_data(pack)
