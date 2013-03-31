@@ -15,8 +15,12 @@ require './models/Verse.rb'	    # Verse model
 require './models/BibleSearch.rb'   # Bible Search
 
 class BibleApi
-    def initialize(useMongo = true)
-	if useMongo
+    def initialize(opts = {})
+	@options = {
+	    :useMongo => true
+	}.merge(opts)
+
+	if @options[:useMongo]
 	    MongoMapper.connection = Mongo::Connection.new('localhost', 27017)
 	    MongoMapper.database = "versemachine"
 	end

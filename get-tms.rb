@@ -11,7 +11,10 @@ require './models/Pack.rb'	    # Pack model
 require './BibleApi.rb'	    # Bible API
 
 # Setup BibleApi to take options for Mongo connection
-bibleApi = BibleApi.new(true)
+opts = {
+    :useMongo => true
+}
+bibleApi = BibleApi.new(opts)
 
 #TMS specific stuff to refactor later
 a = Pack.new('a')
