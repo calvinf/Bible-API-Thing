@@ -17,78 +17,90 @@ require './models/BibleSearch.rb'   # Bible Search
 MongoMapper.connection = Mongo::Connection.new('localhost', 27017)
 MongoMapper.database = "versemachine"
 
-#TODO look adding this method to pack
-def get_pack_data(pack)
-    bibleSearch = BibleSearch.new()
-    versesNeeded = check_for_verses(pack)
+class BibleApi
+    def initialize
 
-    if versesNeeded > 0
-	puts "Verses needed for #{pack.get_title}"
-	url       = bibleSearch.get_search_url(pack.verses)
-	data      = bibleSearch.get_search_result(url)
-	@passages = get_passages(data)
-
-	# print passages
-	@passages.each_entry do |passage|
-	    verse = distill(passage)
-	    #puts verse.to_s
-	end
-    else
-	puts "Pack #{pack.get_title}: all verses found in MongoDB"
     end
-end
 
-def check_for_verses(pack)
-    # see if the verses are in db or if we need to fetch them
-    versesNeeded = 0
-    pack.verses.each do |reference|
-	cache_key = 'esv::' + reference.downcase.gsub(/\s+/, "")
-	curVerse = Verse.find_by_cache_key(cache_key)
-	if curVerse.nil?
-	    versesNeeded += 1
+    #TODO look adding this method to pack
+    def get_pack_data(pack)
+	bibleSearch = BibleSearch.new()
+	versesNeeded = self.check_for_verses(pack)
+
+	if versesNeeded > 0
+	    puts "Verses needed for #{pack.get_title}"
+	    url       = bibleSearch.get_search_url(pack.verses)
+	    data      = bibleSearch.get_search_result(url)
+	    @passages = self.get_passages(data)
+
+	    # print passages
+	    @passages.each_entry do |passage|
+		verse = self.distill(passage)
+	    end
+	else
+	    puts "Pack #{pack.get_title}: all verses found in MongoDB"
 	end
     end
 
-    return versesNeeded
-end
+    def check_for_verses(pack)
+	# see if the verses are in db or if we need to fetch them
+	versesNeeded = 0
+	pack.verses.each do |reference|
+	    cache_key = 'esv::' + reference.downcase.gsub(/\s+/, "")
+	    curVerse = Verse.find_by_cache_key(cache_key)
+	    if curVerse.nil?
+		versesNeeded += 1
+	    end
+	end
 
-def get_passages(data)
-    # prepare to parse
-    @doc = Nokogiri::XML(data) do |config|
-	config.nocdata
+	return versesNeeded
     end
 
-    # grab passages
-    return @doc.css('passages passage')
+    def get_passages(data)
+	# prepare to parse
+	@doc = Nokogiri::XML(data) do |config|
+	    config.nocdata
+	end
+
+	# grab passages
+	return @doc.css('passages passage')
+    end
+
+    def distill(passage)
+	coder = HTMLEntities.new
+
+	passage.css('sup').remove
+	
+	translation = passage.at_css('version').content
+	reference   = passage.at_css('display').content
+
+	text_html = Nokogiri::HTML(passage.at_css('text_preview').content)
+	text_html.xpath("//sup").remove
+
+	# trim the leading/trailing whitespace, remove linebreaks, 
+	# remove tabs, remove excessive whitespace
+	text = text_html.content
+	text = coder.encode(text)
+	text.strip!.gsub!(/[\n\t]/, ' ')
+	text.gsub!(/\s+/, " ")
+
+	verse = self.create_verse(reference, text, translation)
+	puts verse.to_s
+	return verse
+    end
+
+    def create_verse(reference, text, translation)
+	verse = Verse.create({
+	    :reference => reference, 
+	    :text => text, 
+	    :translation => translation
+	})
+	verse.save!
+	return verse
+    end
 end
 
-def distill(passage)
-    coder = HTMLEntities.new
-
-    passage.css('sup').remove
-    
-    translation = passage.at_css('version').content
-    reference   = passage.at_css('display').content
-
-    text_html = Nokogiri::HTML(passage.at_css('text_preview').content)
-    text_html.xpath("//sup").remove
-
-    #trim the leading/trailing whitespace, remove linebreaks, remove tabs, remove excessive whitespace
-    text = text_html.content
-    text = coder.encode(text)
-    text.strip!.gsub!(/[\n\t]/, ' ')
-    text.gsub!(/\s+/, " ")
-
-    verse = Verse.create({
-	:reference => reference, 
-	:text => text, 
-	:translation => translation
-    })
-    verse.save!
-    puts verse.to_s
-
-    return verse
-end
+bibleApi = BibleApi.new()
 
 #TMS specific stuff to refactor later
 a = Pack.new('a')
@@ -112,5 +124,5 @@ packs = [a, b, c, d, e]
 
 # loop through each pack
 packs.each do |pack|
-  get_pack_data(pack)
+  bibleApi.get_pack_data(pack)
 end
