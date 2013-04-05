@@ -9,97 +9,113 @@ Bundler.require(:default)
 require 'pp'  # prettyprint (for errors and testing)
 
 # other includes
-require './api-key.rb'		    # BIBLE_KEY
-require './models/Pack.rb'	    # Pack model
-require './models/Verse.rb'	    # Verse model
+require './api-key.rb'              # BIBLE_KEY
 require './models/BibleSearch.rb'   # Bible Search
+require './models/Pack.rb'          # Pack model
+require './models/Verse.rb'         # Verse model
+require './models/VerseBase.rb'     # VerseBase model
 
 class BibleApi
     def initialize(opts = {})
-	@options = {
-	    :useMongo => true
-	}.merge(opts)
+        @options = {
+            :useMongo => true
+        }.merge(opts)
 
-	if @options[:useMongo]
-	    MongoMapper.connection = Mongo::Connection.new('localhost', 27017)
-	    MongoMapper.database = "versemachine"
-	end
+        if @options[:useMongo]
+            # TODO add error handling when server is unreachable
+            MongoMapper.connection = Mongo::Connection.new('localhost', 27017)
+            MongoMapper.database = "versemachine"
+        end
     end
 
     #TODO look adding this method to pack
     def get_pack_data(pack)
-	bibleSearch = BibleSearch.new()
-	versesNeeded = self.check_for_verses(pack)
+        bibleSearch = BibleSearch.new()
 
-	if versesNeeded > 0
-	    puts "Verses needed for #{pack.get_title}"
-	    url       = bibleSearch.get_search_url(pack.verses)
-	    data      = bibleSearch.get_search_result(url)
-	    @passages = self.get_passages(data)
+        if @options[:useMongo]
+            versesNeeded = self.check_for_verses(pack)
+            if versesNeeded == 0
+                puts "Pack #{pack.get_title}: all verses found in MongoDB"
+                return
+            end
+        end
 
-	    # print passages
-	    @passages.each_entry do |passage|
-		verse = self.distill(passage)
-	    end
-	else
-	    puts "Pack #{pack.get_title}: all verses found in MongoDB"
-	end
+        puts "Verses needed for #{pack.get_title}"
+        url       = bibleSearch.get_search_url(pack.verses)
+        data      = bibleSearch.get_search_result(url)
+        @passages = self.get_passages(data)
+
+        # distill the verses from the results
+        verses = []
+        @passages.each_entry do |passage|
+            verses.push( self.distill(passage) )
+        end
+        return verses
     end
 
     def check_for_verses(pack)
-	# see if the verses are in db or if we need to fetch them
-	versesNeeded = 0
-	pack.verses.each do |reference|
-	    cache_key = 'esv::' + reference.downcase.gsub(/\s+/, "")
-	    curVerse = Verse.find_by_cache_key(cache_key)
-	    if curVerse.nil?
-		versesNeeded += 1
-	    end
-	end
+        # see if the verses are in db or if we need to fetch them
+        versesNeeded = 0
+        pack.verses.each do |reference|
+            cache_key = 'esv::' + reference.downcase.gsub(/\s+/, "")
+            curVerse = Verse.find_by_cache_key(cache_key)
+            if curVerse.nil?
+                versesNeeded += 1
+            end
+        end
 
-	return versesNeeded
+        return versesNeeded
     end
 
     def get_passages(data)
-	# prepare to parse
-	@doc = Nokogiri::XML(data) do |config|
-	    config.nocdata
-	end
+        # prepare to parse
+        @doc = Nokogiri::XML(data) do |config|
+            config.nocdata
+        end
 
-	# grab passages
-	return @doc.css('passages passage')
+        # grab passages
+        return @doc.css('passages passage')
     end
 
     def distill(passage)
-	coder = HTMLEntities.new
+        passage.css('sup').remove
 
-	passage.css('sup').remove
-	
-	translation = passage.at_css('version').content
-	reference   = passage.at_css('display').content
+        translation = passage.at_css('version').content
+        reference   = passage.at_css('display').content
 
-	text_html = Nokogiri::HTML(passage.at_css('text_preview').content)
-	text_html.xpath("//sup").remove
+        text_html = Nokogiri::HTML(passage.at_css('text_preview').content)
+        text_html.xpath("//sup").remove
 
-	# trim the leading/trailing whitespace, remove linebreaks, 
-	# remove tabs, remove excessive whitespace
-	text = text_html.content
-	text = coder.encode(text)
-	text.strip!.gsub!(/[\n\t]/, ' ')
-	text.gsub!(/\s+/, " ")
+        text  = self.cleanser(text_html.content)
+        verse = self.create_verse(reference, text, translation)
+        return verse
+    end
 
-	verse = self.create_verse(reference, text, translation)
-	puts verse.to_s
-	return verse
+    def cleanser(text)
+        coder = HTMLEntities.new
+
+        # trim the leading/trailing whitespace, remove linebreaks, 
+        # remove tabs, remove excessive whitespace
+        text = coder.encode(text)
+        text.strip!.gsub!(/[\n\t]/, ' ')
+        text.gsub!(/\s+/, " ")
+
+        return text
     end
 
     def create_verse(reference, text, translation)
-	verse = Verse.create({
-	    :reference => reference, 
-	    :text => text, 
-	    :translation => translation
-	})
-	verse.save!
-	return verse
+        # this is where the verse factory could be handy
+        settings = {
+            :reference => reference, 
+            :text => text, 
+            :translation => translation
+        }
+        if @options[:useMongo]
+            verse = Verse.create(settings)
+            verse.save!
+        else
+            verse = VerseBase.new(settings)
+        end
+        return verse
     end
 end

@@ -38,5 +38,5 @@ packs = [a, b, c, d, e]
 
 # loop through each pack
 packs.each do |pack|
-  bibleApi.get_pack_data(pack)
+    bibleApi.get_pack_data(pack)
 end
