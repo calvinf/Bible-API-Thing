@@ -17,11 +17,11 @@ opts = {
 bibleApi = BibleApi.new(opts)
 
 #TMS specific stuff to refactor later
-a = Pack.new('a')
-b = Pack.new('b')
-c = Pack.new('c')
-d = Pack.new('d')
-e = Pack.new('e')
+a = Pack.new('A')
+b = Pack.new('B')
+c = Pack.new('C')
+d = Pack.new('D')
+e = Pack.new('E')
 
 #packs w/ arrays of bible verse references
 a.verses = ["2 Corinthians 5:17", "Galatians 2:20", "Romans 12:1", "John 14:21", "2 Timothy 3:16", "Joshua 1:8", "John 15:7", "Philippians 4:6-7", "Matthew 18:20", "Hebrews 10:24-25", "Matthew 4:19", "Romans 1:16"]

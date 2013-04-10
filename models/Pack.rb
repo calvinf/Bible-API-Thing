@@ -8,7 +8,7 @@ class Pack
     end
 
     def get_title
-	return @title.capitalize
+        return @title
     end
 
     def get_pack_data(pack)
@@ -32,9 +32,9 @@ class Pack
 
     def to_s
 	if(defined? @verses)
-	    return @title.capitalize + ': ' + @verses.join(', ')
+	    return @title + ': ' + @verses.join(', ')
 	else
-	    return @title.capitalize
+	    return @title
 	end
     end
 end
