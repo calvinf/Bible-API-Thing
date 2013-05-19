@@ -23,12 +23,12 @@ class BibleApi
 
         if @options[:useMongo]
             # TODO add error handling when server is unreachable
+            # here and elsewhere in file
             MongoMapper.connection = Mongo::Connection.new('localhost', 27017)
             MongoMapper.database = "versemachine"
         end
     end
 
-    #TODO look adding this method to pack
     def get_pack_data(pack)
         bibleSearch = BibleSearch.new()
 
@@ -43,6 +43,9 @@ class BibleApi
         puts "Verses needed for #{pack.get_title}"
         url       = bibleSearch.get_search_url(pack.verses)
         data      = bibleSearch.get_search_result(url)
+
+        puts "Retrieving from URL: " + url
+
         @passages = self.get_passages(data)
 
         # distill the verses from the results
@@ -83,8 +86,9 @@ class BibleApi
         translation = passage.at_css('version').content
         reference   = passage.at_css('display').content
 
-        text_html = Nokogiri::HTML(passage.at_css('text_preview').content)
+        text_html = Nokogiri::HTML(passage.at_css('text').content)
         text_html.xpath("//sup").remove
+        text_html.xpath("//h3").remove
 
         text  = self.cleanser(text_html.content)
         verse = self.create_verse(reference, text, translation)
@@ -97,7 +101,11 @@ class BibleApi
         # trim the leading/trailing whitespace, remove linebreaks, 
         # remove tabs, remove excessive whitespace
         text = coder.encode(text)
-        text.strip!.gsub!(/[\n\t]/, ' ')
+
+        # keep strip on its own line because it returns nil when
+        # there is no change to the string (and you can't chain it)
+        text.strip!
+        text.gsub!(/[\n\t]/, ' ')
         text.gsub!(/\s+/, " ")
 
         return text
