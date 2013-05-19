@@ -3,7 +3,7 @@ require 'curb'
 require_relative '../api-key.rb'
 
 # Globals
-API_BASE = 'http://bibles.org/'
+API_BASE = 'http://bibles.org/v1/'
 
 # translations: comma separated list, e.g. 'ESV,KJV,NASB'
 VERSIONS = 'ESV'
