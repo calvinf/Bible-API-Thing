@@ -26,6 +26,8 @@ I create packs with a list of verses I want to retrieve.  The script checks for 
 
 _The Gemfile will always have the current list, but here are a few._
 
+To install bundler, run `gem install bundle`.  Once you have done this, you can run `bundle install` to install all gem dependencies for this library.
+
 * [bson_ext](http://rubygems.org/gems/bson_ext)
 * [bundler](http://rubygems.org/gems/bundler)
 * [curb](http://rubygems.org/gems/curb)
