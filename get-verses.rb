@@ -13,21 +13,26 @@ require './api-key.rb'		# BIBLE_KEY
 require './BibleApi.rb'		# Bible API
 require './models/Pack.rb'	# Pack model
 
-bibleApi = BibleApi.new
+bibleApi = BibleApi.new({:useMongo => false})
 
-if(ARGV.size < 1) 
+if(ARGV.size < 1)
     print "Please pass in a file\n"
     exit
 end
 
-File.open(ARGV[0]) do |file| 
+File.open(ARGV[0]) do |file|
     p = Pack.new("prayer")
-    p.verses = file.readlines
+    verses = []
+    file.readlines.each do |line|
+        verses.push(line.chomp)
+    end
+
+    p.verses = verses
 
     versesWithPassage = bibleApi.get_pack_data(p)
     versesWithPassage.each do |passage|
         puts passage.text + "\n"
         puts passage.reference + "\n\n"
-    end	
+    end
     file.close
 end
