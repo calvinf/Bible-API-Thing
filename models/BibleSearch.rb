@@ -17,7 +17,6 @@ class BibleSearch
         @versions = versions ? versions : DEFAULT_VERSIONS
     end
 
-    # TODO move to BibleSearch class
     def get_search_url(verses)
         url = get_passages_url + '?&q[]=' + CGI.escape(verses.join(','))
         return url 

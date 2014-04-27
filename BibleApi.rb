@@ -33,17 +33,20 @@ class BibleApi
     def get_pack_data(pack)
         bibleSearch = BibleSearch.new(@options[:translations])
 
+        # by default, get all verses
+        versesNeeded = pack.verses
+
         if @options[:useMongo]
-            # TODO return list of verses needed from check_for_verses
+            # only get the verses we don't already have in Mongo
             versesNeeded = self.check_for_verses(pack)
-            if versesNeeded == 0
+            if versesNeeded.length == 0
                 puts "Pack #{pack.get_title}: all verses found in MongoDB"
                 return
             end
         end
 
-        puts "Verses needed for #{pack.get_title}"
-        url = bibleSearch.get_search_url(pack.verses)
+        puts "Verses needed for #{pack.get_title}: #{versesNeeded.to_s}"
+        url = bibleSearch.get_search_url(versesNeeded)
         data = bibleSearch.get_search_result(url)
 
         puts "Retrieving from URL: " + url
@@ -60,13 +63,13 @@ class BibleApi
 
     def check_for_verses(pack)
         # see if the verses are in db or if we need to fetch them
-        versesNeeded = 0
+        versesNeeded = []
         pack.verses.each do |reference|
             @options[:translations].each do |translation|
                 cache_key = translation.downcase + '::' + reference.downcase.gsub(/\s+/, "")
                 curVerse = Verse.find_by_cache_key(cache_key)
                 if curVerse.nil?
-                    versesNeeded += 1
+                    versesNeeded.push(reference)
                 end
             end
         end
