@@ -6,13 +6,18 @@ require 'bundler/setup'
 Bundler.require(:default)
 
 # other includes
-require './api-key.rb'		    # BIBLE_KEY
-require './models/Pack.rb'	    # Pack model
+require './api-key.rb'		# BIBLE_KEY
+require './models/Pack.rb'	# Pack model
 require './BibleApi.rb'	    # Bible API
 
 # Setup BibleApi to take options for Mongo connection
 opts = {
-    :useMongo => true
+    :useMongo => true,
+
+    # TODO fix verse cache key to handle "Psalm" v. "Psalms" in order to support KJV
+    # options: add start_verse_id and end_verse_id to Packs db info
+    #          or find another unique identifier for each verse
+    :translations => ['eng-ESV', 'eng-NASB'] 
 }
 bibleApi = BibleApi.new(opts)
 

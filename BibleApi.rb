@@ -18,7 +18,8 @@ require './models/VerseBase.rb'     # VerseBase model
 class BibleApi
     def initialize(opts = {})
         @options = {
-            :useMongo => true
+            :useMongo => true,
+            :translations => ['eng-ESV']
         }.merge(opts)
 
         if @options[:useMongo]
@@ -30,9 +31,10 @@ class BibleApi
     end
 
     def get_pack_data(pack)
-        bibleSearch = BibleSearch.new()
+        bibleSearch = BibleSearch.new(@options[:translations])
 
         if @options[:useMongo]
+            # TODO return list of verses needed from check_for_verses
             versesNeeded = self.check_for_verses(pack)
             if versesNeeded == 0
                 puts "Pack #{pack.get_title}: all verses found in MongoDB"
@@ -41,8 +43,8 @@ class BibleApi
         end
 
         puts "Verses needed for #{pack.get_title}"
-        url       = bibleSearch.get_search_url(pack.verses)
-        data      = bibleSearch.get_search_result(url)
+        url = bibleSearch.get_search_url(pack.verses)
+        data = bibleSearch.get_search_result(url)
 
         puts "Retrieving from URL: " + url
 
@@ -60,10 +62,12 @@ class BibleApi
         # see if the verses are in db or if we need to fetch them
         versesNeeded = 0
         pack.verses.each do |reference|
-            cache_key = 'esv::' + reference.downcase.gsub(/\s+/, "")
-            curVerse = Verse.find_by_cache_key(cache_key)
-            if curVerse.nil?
-                versesNeeded += 1
+            @options[:translations].each do |translation|
+                cache_key = translation.downcase + '::' + reference.downcase.gsub(/\s+/, "")
+                curVerse = Verse.find_by_cache_key(cache_key)
+                if curVerse.nil?
+                    versesNeeded += 1
+                end
             end
         end
 

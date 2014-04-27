@@ -2,8 +2,8 @@ class Verse
     include MongoMapper::Document
 
     key :reference,	String, :required => true
-    key :text,		String, :required => true
-    key :translation,	String, :required => true
+    key :text, String, :required => true
+    key :translation, String, :required => true
     key :cache_key,	String, :required => true
     timestamps!
 
