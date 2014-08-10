@@ -73,7 +73,7 @@ class BibleApi
         # TODO find a way to minize API calls and still keep
         # track of the original reference requested
         if(!versesNeeded.nil? && !versesNeeded.empty?)
-            puts "NEEDED: #{versesNeeded.to_s}"
+            puts "Verses needed: #{versesNeeded.to_s}"
             versesNeeded.each do |verseToGet|
                 url = bibleSearch.get_search_url(verseToGet)
                 data = bibleSearch.get_search_result(url)
@@ -133,11 +133,6 @@ class BibleApi
         copyright = passage.at_css('copyright').content
         path = passage.at_css('path').content
 
-        puts "TRANSLATION: #{translation}"
-        puts "REF: #{reference}"
-        puts "COPY: #{copyright}"
-        puts "PATH: #{path}"
-
         text = self.clean_text(passage.at_css('text').content)
 
         verse_options = {}
@@ -186,8 +181,6 @@ class BibleApi
             # info needed to make retrieving from Mongo easier
             settings['reference_requested'] = verse_options['reference_requested']
             settings['path'] = verse_options['path']
-
-            puts "settings: #{verse_options.to_s}"
 
             verse = Verse.create(settings)
             verse.save!
