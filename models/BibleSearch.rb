@@ -18,8 +18,17 @@ class BibleSearch
     end
 
     def get_search_url(verses)
-        url = get_passages_url + '?&q[]=' + CGI.escape(verses.join(','))
-        return url 
+        passageString = ""
+        if verses.is_a?(Array)
+            passageString = verses.join(',')
+        elsif verses.is_a?(String)
+            passageString = verses
+        else
+            raise ArgumentError.new('Must provide a single verse (String) or an array of verses (Array)')
+        end
+
+        url = get_passages_url + '?&q[]=' + CGI.escape(passageString)
+        return url
     end
 
     def get_passages_url

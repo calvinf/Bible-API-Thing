@@ -16,6 +16,10 @@ require './models/Verse.rb'         # Verse model
 require './models/VerseBase.rb'     # VerseBase model
 
 class BibleApi
+    # Constants
+    # amount of time to sleep between API calls
+    SLEEP_TIME = 0.1
+
     def initialize(opts = {})
         @options = {
             :useMongo => true,
@@ -31,11 +35,16 @@ class BibleApi
     end
 
     def get_pack_data(pack)
-        bibleSearch = BibleSearch.new(@options[:translations])
+        # determine verses needed
+        versesNeeded = self.get_verses_needed(pack)
 
-        # by default, get all verses
-        versesNeeded = pack.verses
+        # get the verses
+        verses = self.get_verses(versesNeeded)
+        return verses
+    end
 
+    def get_verses_needed(pack)
+        versesNeeded = []
         if @options[:useMongo]
             # only get the verses we don't already have in Mongo
             versesNeeded = self.check_for_verses(pack)
@@ -46,18 +55,43 @@ class BibleApi
         end
 
         puts "Verses needed for #{pack.get_title}: #{versesNeeded.to_s}"
-        url = bibleSearch.get_search_url(versesNeeded)
-        data = bibleSearch.get_search_result(url)
+        return versesNeeded
+    end
 
-        puts "Retrieving from URL: " + url
+    def get_verses(versesNeeded)
+        # TODO optimize for multiple verses
+        # using single-verse query for now in order to
+        # be able to map a single reference_requested
+        # to a single passage (easier to check for
+        # existence in mongo already if we know this)
 
-        @passages = self.get_passages(data)
-
-        # distill the verses from the results
+        # array of resulting verses
         verses = []
-        @passages.each_entry do |passage|
-            verses.push( self.distill(passage) )
+
+        bibleSearch = BibleSearch.new(@options[:translations])
+
+        # TODO find a way to minize API calls and still keep
+        # track of the original reference requested
+        if(!versesNeeded.nil? && !versesNeeded.empty?)
+            puts "NEEDED: #{versesNeeded.to_s}"
+            versesNeeded.each do |verseToGet|
+                url = bibleSearch.get_search_url(verseToGet)
+                data = bibleSearch.get_search_result(url)
+
+                puts "Retrieving from URL: " + url
+                @passages = self.get_passages(data)
+
+                # distill the verses from the results
+                @passages.each_entry do |passage|
+                    verse = self.distill(passage, verseToGet)
+                    verses.push(verse)
+                end
+
+                # be nice: don't flood the service
+                sleep(SLEEP_TIME)
+            end
         end
+
         return verses
     end
 
@@ -87,25 +121,44 @@ class BibleApi
         return @doc.css('passages passage')
     end
 
-    def distill(passage)
+    def distill(passage, reference_requested)
         passage.css('sup').remove
 
         translation = passage.at_css('version').content
-        reference   = passage.at_css('display').content
+        reference = passage.at_css('display').content
+        copyright = passage.at_css('copyright').content
+        path = passage.at_css('path').content
 
-        text_html = Nokogiri::HTML(passage.at_css('text').content)
+        puts "TRANSLATION: #{translation}"
+        puts "REF: #{reference}"
+        puts "COPY: #{copyright}"
+        puts "PATH: #{path}"
+
+        text = self.clean_text(passage.at_css('text').content)
+
+        verse_options = {}
+        if @options[:useMongo]
+            verse_options = {
+                'path' => path,
+                'reference_requested' => reference_requested
+            }
+        end
+        verse = self.create_verse(reference, text, translation, verse_options)
+        return verse
+    end
+
+    def clean_text(passageText)
+        text_html = Nokogiri::HTML(passageText)
         text_html.xpath("//sup").remove
         text_html.xpath("//h3").remove
 
-        text  = self.cleanser(text_html.content)
-        verse = self.create_verse(reference, text, translation)
-        return verse
+        return self.cleanser(text_html.content)
     end
 
     def cleanser(text)
         coder = HTMLEntities.new
 
-        # trim the leading/trailing whitespace, remove linebreaks, 
+        # trim the leading/trailing whitespace, remove linebreaks,
         # remove tabs, remove excessive whitespace
         text = coder.encode(text)
 
@@ -118,14 +171,20 @@ class BibleApi
         return text
     end
 
-    def create_verse(reference, text, translation)
+    def create_verse(reference, text, translation, verse_options = {})
         # this is where the verse factory could be handy
         settings = {
-            :reference => reference, 
-            :text => text, 
+            :reference => reference,
+            :text => text,
             :translation => translation
         }
         if @options[:useMongo]
+            # info needed to make retrieving from Mongo easier
+            settings['reference_requested'] = verse_options['reference_requested']
+            settings['path'] = verse_options['path']
+
+            puts "settings: #{verse_options.to_s}"
+
             verse = Verse.create(settings)
             verse.save!
         else
