@@ -1,5 +1,6 @@
 require 'cgi'
 require 'curb'
+require 'retries'
 require_relative '../api-key.rb'
 
 class BibleSearch
@@ -36,9 +37,12 @@ class BibleSearch
     end
 
     def get_search_result(url)
-        c = Curl::Easy.new(url)
-        c.userpwd = BIBLE_KEY + ':X'
-        c.perform
-        return c.body_str
+        # retry up to three times
+        with_retries(:max_tries => 3, :rescue => Curl::Err::HostResolutionError) do
+            c = Curl::Easy.new(url)
+            c.userpwd = BIBLE_KEY + ':X'
+            c.perform
+            return c.body_str
+        end
     end
 end
