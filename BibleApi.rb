@@ -108,6 +108,10 @@ class BibleApi
             end
         end
 
+        # We only want each reference once.
+        # When we search, we grab results for all the translations desired.
+        versesNeeded = versesNeeded.uniq
+
         return versesNeeded
     end
 
