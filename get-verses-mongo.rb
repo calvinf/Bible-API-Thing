@@ -53,7 +53,11 @@ end
 
 File.open(ARGV[0]) do |file| 
     pack = Pack.new(options[:name])
-    pack.verses = file.readlines
+    verses = []
+    file.readlines.each do |line|
+        verses.push(line.chomp)
+    end
+    pack.verses = verses
 
     bibleApi.get_pack_data(pack)
 end
