@@ -187,6 +187,12 @@ class BibleApi
             settings['reference_requested'] = verse_options['reference_requested']
             settings['path'] = verse_options['path']
 
+            # TODO when using overwrite mode, check for existence of verse here
+            # before writing to it, and if it's there, replace the old one.
+            # As it is, we can end up with two copies of the same cache_key
+            # (this can be worked around by setting
+            # db.members.ensureIndex( { "cache_key": 1 }, { unique: true } )
+            # in Mongo, but it isn't perfect and doesn't help us update the db.
             verse = Verse.create(settings)
             verse.save!
         else
