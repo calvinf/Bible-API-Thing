@@ -23,12 +23,12 @@ class BibleApi
     def initialize(opts = {})
         @options = {
             :useMongo => true,
+            :overwrite => false,
             :translations => ['eng-ESV']
         }.merge(opts)
 
         if @options[:useMongo]
             # TODO add error handling when server is unreachable
-            # here and elsewhere in file
             MongoMapper.connection = Mongo::Connection.new('localhost', 27017)
             MongoMapper.database = "versemachine"
         end
@@ -101,8 +101,12 @@ class BibleApi
         pack.verses.each do |reference|
             @options[:translations].each do |translation|
                 cache_key = translation.downcase + '::' + reference.downcase.gsub(/\s+/, "")
+
                 curVerse = Verse.find_by_cache_key(cache_key)
-                if curVerse.nil?
+
+                # if the verse is empty or we're overwriting it,
+                # add it to the list to retrieve
+                if curVerse.nil? || @options[:overwrite]
                     versesNeeded.push(reference)
                 end
             end
@@ -142,7 +146,7 @@ class BibleApi
                 'reference_requested' => reference_requested
             }
         end
-        verse = self.create_verse(reference, text, translation, verse_options)
+        verse = self.create_verse(reference, text, translation, copyright, verse_options)
         return verse
     end
 
@@ -170,12 +174,13 @@ class BibleApi
         return text
     end
 
-    def create_verse(reference, text, translation, verse_options = {})
+    def create_verse(reference, text, translation, copyright, verse_options = {})
         # this is where the verse factory could be handy
         settings = {
             :reference => reference,
             :text => text,
-            :translation => translation
+            :translation => translation,
+            :copyright => copyright
         }
         if @options[:useMongo]
             # info needed to make retrieving from Mongo easier

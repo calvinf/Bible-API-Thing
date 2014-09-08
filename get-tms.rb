@@ -5,17 +5,41 @@ require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:default)
 
+# for options parsing
+require 'optparse'
+
 # other includes
 require './api-key.rb'		# BIBLE_KEY
 require './models/Pack.rb'	# Pack model
 require './BibleApi.rb'	    # Bible API
 
 # Setup BibleApi to take options for Mongo connection
-opts = {
+options = {
     :useMongo => true,
+    :overwrite => false,
     :translations => ['eng-ESV', 'eng-NASB', 'eng-KJV']
 }
-bibleApi = BibleApi.new(opts)
+
+# we want to allow some options for this file such as
+# the ability to overwrite existing verses in the db
+# in cases where we have changed the verse model,
+# or need additional information from the API
+optparse = OptionParser.new do |opts|
+    opts.banner = "Usage: $0 [options]"
+
+    opts.on( '-o', '--overwrite', 'Optional: replace and overwrite existing verses' ) do |overwrite|
+        options[:overwrite] = true
+    end
+
+    opts.on( '-h', '--help', 'Display help screen' ) do
+        puts opts
+        exit
+    end
+end
+
+optparse.parse!
+
+bibleApi = BibleApi.new(options)
 
 #TMS specific stuff to refactor later
 a = Pack.new('A')

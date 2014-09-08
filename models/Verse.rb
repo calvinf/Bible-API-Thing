@@ -18,6 +18,9 @@ class Verse
     # the translation of the verse / passage
     key :translation, String, :required => true
 
+    # the copyright info for the verse
+    key :copyright, String, :required => false
+
     # the cache_key
     key :cache_key,	String, :required => true
 
