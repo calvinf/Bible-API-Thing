@@ -19,7 +19,7 @@ get-verses.rb
 Currently, verses can either be output to the screen or to MongoDB.  I'm looking at ways to make the database part of these tools more modular.
 
 
-I create packs with a list of verses I want to retrieve.  The script checks for the presence of the pack in my memcached instance.  If it's there, I use it; otherwise, I make the call to the BibleSearch API and store it locally.
+I create packs with a list of verses I want to retrieve.  The script checks for the presence of the pack in my MongoDB instance.  If it's there, I use it; otherwise, I make the call to the BibleSearch API and store it locally.  Note: Bible API has restrictions around storage of data -- please abide by these rules, and include appropriate copyright and usage tracking information in your website if you use data from the API.
 
 ## Dependencies ##
 ### Gems ###
