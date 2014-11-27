@@ -17,7 +17,15 @@ require './BibleApi.rb'	    # Bible API
 options = {
     :useMongo => true,
     :overwrite => false,
-    :translations => ['eng-ESV', 'eng-NASB', 'eng-KJV']
+
+    # Recommendation: TMS has verses in both OT & NT. Pick translations with both.
+    :translations => [
+        'eng-CEV',
+        'eng-ESV', # English Standard Version
+        'eng-KJV', # King James Version
+        'eng-MSG',
+        'eng-NASB'
+    ]
 }
 
 # we want to allow some options for this file such as

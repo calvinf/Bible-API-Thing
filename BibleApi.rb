@@ -107,6 +107,7 @@ class BibleApi
                 # if the verse is empty or we're overwriting it,
                 # add it to the list to retrieve
                 if curVerse.nil? || @options[:overwrite]
+                    # puts "Needed: #{reference} (#{translation})"
                     versesNeeded.push(reference)
                 end
             end
