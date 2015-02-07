@@ -13,7 +13,7 @@ require './api-key.rb'		# BIBLE_KEY
 require './BibleApi.rb'		# Bible API
 require './models/Pack.rb'	# Pack model
 
-bibleApi = BibleApi.new({:useMongo => false})
+bibleApi = BibleApi.new
 
 if(ARGV.size < 1)
     print "Please pass in a file\n"

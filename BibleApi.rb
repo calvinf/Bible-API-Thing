@@ -1,19 +1,41 @@
 #!/usr/bin/env ruby
 
-# using bundler http://gembundler.com/
 require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:default)
 
-# all the other things we want to use
-require 'pp'  # prettyprint (for errors and testing)
+require 'active_record'
+require 'pp'
 
 # other includes
 require './api-key.rb'              # BIBLE_KEY
 require './models/BibleSearch.rb'   # Bible Search
-require './models/Pack.rb'          # Pack model
+
+ActiveRecord::Base.establish_connection(
+    :adapter => "sqlite3",
+    :database => "bible-verse.db"
+)
+
+ActiveRecord::Base.logger = Logger.new(STDERR)
+
 require './models/Verse.rb'         # Verse model
-require './models/VerseBase.rb'     # VerseBase model
+
+unless Verse.table_exists?
+    ActiveRecord::Schema.define do
+        create_table :verses do |t|
+            t.string :reference
+            t.string :reference_requested
+            t.string :path
+            t.string :text
+            t.string :translation
+            t.string :copyright
+            t.string :verse_key
+
+            t.references :shareable, polymorphic: true, index: true
+            t.timestamps null: false
+        end
+    end
+end
 
 class BibleApi
     # Constants
@@ -22,16 +44,9 @@ class BibleApi
 
     def initialize(opts = {})
         @options = {
-            :useMongo => true,
             :overwrite => false,
             :translations => ['eng-ESV']
         }.merge(opts)
-
-        if @options[:useMongo]
-            # TODO add error handling when server is unreachable
-            MongoMapper.connection = Mongo::Connection.new('localhost', 27017)
-            MongoMapper.database = "versemachine"
-        end
     end
 
     def get_pack_data(pack)
@@ -44,27 +59,18 @@ class BibleApi
     end
 
     def get_verses_needed(pack)
-        versesNeeded = []
-        if @options[:useMongo]
-            # only get the verses we don't already have in Mongo
-            versesNeeded = self.check_for_verses(pack)
-            if versesNeeded.length == 0
-                puts "Pack #{pack.title}: all verses found in MongoDB"
-                return
-            end
+        versesNeeded = self.check_for_verses(pack)
+
+        if versesNeeded.length == 0
+            puts "Pack #{pack[:title]}: all verses found"
+            return
         end
 
-        puts "Verses needed for #{pack.title}: #{versesNeeded.to_s}"
+        puts "Verses needed for #{pack[:title]}: #{versesNeeded.to_s}"
         return versesNeeded
     end
 
     def get_verses(versesNeeded)
-        # TODO optimize for multiple verses
-        # using single-verse query for now in order to
-        # be able to map a single reference_requested
-        # to a single passage (easier to check for
-        # existence in mongo already if we know this)
-
         # array of resulting verses
         verses = []
 
@@ -98,16 +104,16 @@ class BibleApi
     def check_for_verses(pack)
         # see if the verses are in db or if we need to fetch them
         versesNeeded = []
-        pack.verses.each do |reference|
+        pack[:verses].each do |reference|
             @options[:translations].each do |translation|
-                cache_key = translation.downcase + '::' + reference.downcase.gsub(/\s+/, "")
+                verse_key = translation.downcase + '::' + reference.downcase.gsub(/\s+/, "")
 
-                curVerse = Verse.find_by_cache_key(cache_key)
+                curVerse = Verse.find_by(verse_key: verse_key)
 
                 # if the verse is empty or we're overwriting it,
                 # add it to the list to retrieve
                 if curVerse.nil? || @options[:overwrite]
-                    # puts "Needed: #{reference} (#{translation})"
+                    puts "Needed: #{reference} (#{translation})"
                     versesNeeded.push(reference)
                 end
             end
@@ -140,14 +146,16 @@ class BibleApi
 
         text = self.clean_text(passage.at_css('text').content)
 
-        verse_options = {}
-        if @options[:useMongo]
-            verse_options = {
-                'path' => path,
-                'reference_requested' => reference_requested
-            }
-        end
-        verse = self.create_verse(reference, text, translation, copyright, verse_options)
+        verse_options = {
+            reference: reference,
+            text: text,
+            translation: translation,
+            copyright: copyright,
+            path: path,
+            reference_requested: reference_requested
+        }
+
+        verse = self.create_verse(verse_options)
         return verse
     end
 
@@ -175,30 +183,17 @@ class BibleApi
         return text
     end
 
-    def create_verse(reference, text, translation, copyright, verse_options = {})
-        # this is where the verse factory could be handy
-        settings = {
-            :reference => reference,
-            :text => text,
-            :translation => translation,
-            :copyright => copyright
-        }
-        if @options[:useMongo]
-            # info needed to make retrieving from Mongo easier
-            settings['reference_requested'] = verse_options['reference_requested']
-            settings['path'] = verse_options['path']
+    def create_verse(verse_options)
+        settings = verse_options
+        settings[:verse_key] = "#{settings[:translation].downcase}::#{settings[:reference_requested].downcase.gsub(/\s+/, "")}"
 
-            # TODO when using overwrite mode, check for existence of verse here
-            # before writing to it, and if it's there, replace the old one.
-            # As it is, we can end up with two copies of the same cache_key
-            # (this can be worked around by setting
-            # db.members.ensureIndex( { "cache_key": 1 }, { unique: true } )
-            # in Mongo, but it isn't perfect and doesn't help us update the db.
-            verse = Verse.create(settings)
-            verse.save!
-        else
-            verse = VerseBase.new(settings)
-        end
+        # TODO when using overwrite mode, check for existence of verse here
+        # before writing to it, and if it's there, replace the old one.
+        # As it is, we can end up with two copies of the same verse_key.
+
+        verse = Verse.create(settings)
+        verse.save!
+
         return verse
     end
 end

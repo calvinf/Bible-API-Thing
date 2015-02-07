@@ -1,19 +1,29 @@
-class Pack
-    #this pack can take a list of verses
-    attr_accessor :verses
-    attr_accessor :abbrev
-    attr_reader :title
+require 'active_record'
 
-    def initialize(title = 'pack')
-        # initialize the pack title (e.g. 'a')
-        @title = title
-    end
+class Pack < ActiveRecord::Base
+    # A pack can contain many verses
+    # We're accessing via polymorphic association
+    has_many :verses, :as => :shareable
 
-    def to_s
-        if(defined? @verses)
-            return @title + ': ' + @verses.join(', ')
-        else
-            return @title
+    # Pack Title
+    validates :title,
+        presence: {message: 'A pack title must be provided.'},
+        uniqueness: true
+
+    # Pack Title Abbreviation
+    validates :abbreviation,
+        length: {maximum: 4, message: 'Pack abbreviation must be less than 4 characters.'}
+end
+
+# TODO move to an ActiveRecord::Migration instead
+unless Pack.table_exists?
+    ActiveRecord::Schema.define do
+        create_table :packs do |t|
+            t.string :title
+            t.string :abbreviation
+            #t.has_many :verses
+
+            t.timestamps null: false
         end
     end
 end

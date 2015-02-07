@@ -1,42 +1,33 @@
-class Verse
-    include MongoMapper::Document
+require 'active_record'
 
+class Verse < ActiveRecord::Base
     # the path is the path returned in the response for the passage
     # by the ABS Bible API
-    key :path, String, :required => true
+    validates :path, :presence => true
 
     # the reference requested (used to look up the verse)
     # we store this and use this as part of our cache key
-    key :reference_requested, String, :required => true
+    validates :reference_requested, :presence => true
 
     # the reference is the verse reference in the given translation
-    key :reference,	String, :required => true
+    validates :reference,	:presence => true
 
     # contents of the verse / passage
-    key :text, String, :required => true
+    validates :text, :presence => true
 
     # the translation of the verse / passage
-    key :translation, String, :required => true
+    validates :translation, :presence => true
 
     # the copyright info for the verse
-    key :copyright, String, :required => false
+    validates :copyright, :presence => false
 
-    # the cache_key
-    key :cache_key,	String, :required => true
+    # the verse_key
+    validates :verse_key, :presence => true
 
-    # add timestamps to the model
-    timestamps!
-
-    before_validation :set_cache_key
+    # http://guides.rubyonrails.org/association_basics.html#polymorphic-associations
+    belongs_to :shareable, :polymorphic => true
 
     def to_s
         return "#{self.reference} (#{self.translation}): #{self.text}"
-    end
-
-    private
-    def set_cache_key
-        # our cache key is a combination of the translation and
-        # the reference requested (used to look up the verse)
-        self.cache_key = translation.downcase + '::' + reference_requested.downcase.gsub(/\s+/, "")
     end
 end

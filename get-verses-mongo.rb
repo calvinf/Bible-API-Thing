@@ -35,11 +35,7 @@ if options[:name].nil?
     exit
 end
 
-# Setup BibleApi to take options for Mongo connection
-bibleApiOpts = {
-    :useMongo => true
-}
-bibleApi = BibleApi.new(bibleApiOpts)
+bibleApi = BibleApi.new
 
 if(ARGV.size < 1) 
     print "Please pass in a file\n"
