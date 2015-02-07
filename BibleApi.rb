@@ -6,7 +6,6 @@ Bundler.require(:default)
 
 require './api-key.rb' # BIBLE_KEY
 require './models/BibleSearch.rb' # Bible Search
-
 require './models/Records.rb' # ActiveRecord initialization
 require './models/Verse.rb' # Verse model
 
