@@ -49,12 +49,12 @@ class BibleApi
             # only get the verses we don't already have in Mongo
             versesNeeded = self.check_for_verses(pack)
             if versesNeeded.length == 0
-                puts "Pack #{pack.get_title}: all verses found in MongoDB"
+                puts "Pack #{pack.title}: all verses found in MongoDB"
                 return
             end
         end
 
-        puts "Verses needed for #{pack.get_title}: #{versesNeeded.to_s}"
+        puts "Verses needed for #{pack.title}: #{versesNeeded.to_s}"
         return versesNeeded
     end
 
