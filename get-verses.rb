@@ -5,13 +5,9 @@ require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:default)
 
-# all the other things we want to use
-require 'pp' # prettyprint (for errors and testing)
-
 # other includes
 require './api-key.rb'		# BIBLE_KEY
 require './BibleApi.rb'		# Bible API
-require './models/Pack.rb'	# Pack model
 
 bibleApi = BibleApi.new
 
@@ -21,13 +17,10 @@ if(ARGV.size < 1)
 end
 
 File.open(ARGV[0]) do |file|
-    p = Pack.new("prayer")
-    verses = []
+    p = {title: "Verse Script", verses: []}
     file.readlines.each do |line|
-        verses.push(line.chomp)
+        p[:verses].push(line.chomp)
     end
-
-    p.verses = verses
 
     versesWithPassage = bibleApi.get_pack_data(p)
     versesWithPassage.each do |passage|
