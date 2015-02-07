@@ -31,3 +31,21 @@ class Verse < ActiveRecord::Base
         return "#{self.reference} (#{self.translation}): #{self.text}"
     end
 end
+
+# TODO move to ActiveRecord::Migration
+unless Verse.table_exists?
+    ActiveRecord::Schema.define do
+        create_table :verses do |t|
+            t.string :reference
+            t.string :reference_requested
+            t.string :path
+            t.string :text
+            t.string :translation
+            t.string :copyright
+            t.string :verse_key
+
+            t.references :shareable, polymorphic: true, index: true
+            t.timestamps null: false
+        end
+    end
+end

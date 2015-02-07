@@ -4,38 +4,11 @@ require 'rubygems'
 require 'bundler/setup'
 Bundler.require(:default)
 
-require 'active_record'
-require 'pp'
+require './api-key.rb' # BIBLE_KEY
+require './models/BibleSearch.rb' # Bible Search
 
-# other includes
-require './api-key.rb'              # BIBLE_KEY
-require './models/BibleSearch.rb'   # Bible Search
-
-ActiveRecord::Base.establish_connection(
-    :adapter => "sqlite3",
-    :database => "bible-verse.db"
-)
-
-ActiveRecord::Base.logger = Logger.new(STDERR)
-
-require './models/Verse.rb'         # Verse model
-
-unless Verse.table_exists?
-    ActiveRecord::Schema.define do
-        create_table :verses do |t|
-            t.string :reference
-            t.string :reference_requested
-            t.string :path
-            t.string :text
-            t.string :translation
-            t.string :copyright
-            t.string :verse_key
-
-            t.references :shareable, polymorphic: true, index: true
-            t.timestamps null: false
-        end
-    end
-end
+require './models/Records.rb' # ActiveRecord initialization
+require './models/Verse.rb' # Verse model
 
 class BibleApi
     # Constants
