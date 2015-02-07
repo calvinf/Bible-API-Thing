@@ -47,14 +47,14 @@ optparse.parse!
 
 bibleApi = BibleApi.new(options)
 
-#TMS specific stuff to refactor later
-a = {title: 'A', abbreviation: 'A'}
-b = {title: 'B', abbreviation: 'B'}
-c = {title: 'C', abbreviation: 'C'}
-d = {title: 'D', abbreviation: 'D'}
-e = {title: 'E', abbreviation: 'E'}
+# Title is used for debug statements - this pack data not actually stored in database
+a = {title: 'A'}
+b = {title: 'B'}
+c = {title: 'C'}
+d = {title: 'D'}
+e = {title: 'E'}
 
-#packs w/ arrays of bible verse references
+# packs w/ arrays of bible verse references
 a[:verses] = ["2 Corinthians 5:17", "Galatians 2:20", "Romans 12:1", "John 14:21", "2 Timothy 3:16", "Joshua 1:8", "John 15:7", "Philippians 4:6-7", "Matthew 18:20", "Hebrews 10:24-25", "Matthew 4:19", "Romans 1:16"]
 
 b[:verses] = ["Romans 3:23", "Isaiah 53:6", "Romans 6:23", "Hebrews 9:27", "Romans 5:8", "1 Peter 3:18", "Ephesians 2:8-9", "Titus 3:5", "John 1:12", "Revelation 3:20", "1 John 5:13", "John 5:24"]
@@ -65,9 +65,7 @@ d[:verses] = ["Matthew 6:33", "Luke 9:23", "1 John 2:15-16", "Romans 12:2", "1 C
 
 e[:verses] = ["John 13:34-35", "1 John 3:18", "Philippians 2:3-4", "1 Peter 5:5-6", "Ephesians 5:3", "1 Peter 2:11", "Leviticus 19:11", "Acts 24:16", "Hebrews 11:6", "Romans 4:20-21", "Galatians 6:9-10", "Matthew 5:16"]
 
-packs = [a, b, c, d, e]
-
 # loop through each pack
-packs.each do |pack|
+[a, b, c, d, e].each do |pack|
     bibleApi.get_pack_data(pack)
 end
