@@ -9,7 +9,7 @@ Bundler.require(:default)
 require './api-key.rb'		# BIBLE_KEY
 require './BibleApi.rb'		# Bible API
 
-bibleApi = BibleApi.new
+api = BibleApi.new
 
 if(ARGV.size < 1)
     print "Please pass in a file\n"
@@ -17,12 +17,12 @@ if(ARGV.size < 1)
 end
 
 File.open(ARGV[0]) do |file|
-    p = {title: "Verse Script", verses: []}
+    p = []
     file.readlines.each do |line|
-        p[:verses].push(line.chomp)
+        p.push(line.chomp)
     end
 
-    versesWithPassage = bibleApi.get_pack_data(p)
+    versesWithPassage = api.get_verses(p)
     versesWithPassage.each do |passage|
         puts passage.text + "\n"
         puts passage.reference + "\n\n"

@@ -21,28 +21,31 @@ class BibleApi
         }.merge(opts)
     end
 
-    def get_pack_data(pack)
+    def get_verses(verseList, title="current list")
         # determine verses needed
-        versesNeeded = self.get_verses_needed(pack)
+        versesNeeded = get_verses_needed(verseList, title)
 
         # get the verses
-        verses = self.get_verses(versesNeeded)
+        verses = fetch_verses(versesNeeded, title)
         return verses
     end
 
-    def get_verses_needed(pack)
-        versesNeeded = self.check_for_verses(pack)
+    # methods below here are private
+    private
+
+    def get_verses_needed(verseList, title)
+        versesNeeded = check_for_verses(verseList)
 
         if versesNeeded.length == 0
-            puts "Pack #{pack[:title]}: all verses found"
+            puts "#{title}: all verses found."
             return
         end
 
-        puts "Verses needed for #{pack[:title]}: #{versesNeeded.to_s}"
+        puts "Verses needed for #{title}: #{versesNeeded.to_s}"
         return versesNeeded
     end
 
-    def get_verses(versesNeeded)
+    def fetch_verses(versesNeeded, title)
         # array of resulting verses
         verses = []
 
@@ -51,17 +54,16 @@ class BibleApi
         # TODO find a way to minize API calls and still keep
         # track of the original reference requested
         if(!versesNeeded.nil? && !versesNeeded.empty?)
-            puts "Verses needed: #{versesNeeded.to_s}"
             versesNeeded.each do |verseToGet|
                 url = bibleSearch.get_search_url(verseToGet)
                 data = bibleSearch.get_search_result(url)
 
                 puts "Retrieving from URL: " + url
-                @passages = self.get_passages(data)
+                @passages = get_passages(data)
 
                 # distill the verses from the results
                 @passages.each_entry do |passage|
-                    verse = self.distill(passage, verseToGet)
+                    verse = distill(passage, verseToGet)
                     verses.push(verse)
                 end
 
@@ -73,10 +75,10 @@ class BibleApi
         return verses
     end
 
-    def check_for_verses(pack)
+    def check_for_verses(verseList)
         # see if the verses are in db or if we need to fetch them
         versesNeeded = []
-        pack[:verses].each do |reference|
+        verseList.each do |reference|
             @options[:translations].each do |translation|
                 verse_key = translation.downcase + '::' + reference.downcase.gsub(/\s+/, "")
 
@@ -116,7 +118,7 @@ class BibleApi
         copyright = passage.at_css('copyright').content
         path = passage.at_css('path').content
 
-        text = self.clean_text(passage.at_css('text').content)
+        text = clean_text(passage.at_css('text').content)
 
         verse_options = {
             reference: reference,
@@ -127,7 +129,7 @@ class BibleApi
             reference_requested: reference_requested
         }
 
-        verse = self.create_verse(verse_options)
+        verse = create_verse(verse_options)
         return verse
     end
 
@@ -136,7 +138,7 @@ class BibleApi
         text_html.xpath("//sup").remove
         text_html.xpath("//h3").remove
 
-        return self.cleanser(text_html.content)
+        return cleanser(text_html.content)
     end
 
     def cleanser(text)
