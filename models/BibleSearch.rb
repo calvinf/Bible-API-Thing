@@ -1,7 +1,7 @@
 require 'cgi'
 require 'curb'
 require 'retries'
-require_relative '../api-key.rb'
+require_relative '../api-key.rb' # BIBLE_KEY
 
 class BibleSearch
     attr_accessor :versions

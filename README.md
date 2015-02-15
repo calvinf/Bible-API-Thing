@@ -29,9 +29,8 @@ To install bundler, run `gem install bundle`.  Once you have done this, you can 
 
 * [activemodel](https://rubygems.org/gems/activemodel)
 * [activerecord](https://rubygems.org/gems/activerecord)
-* [bson_ext](http://rubygems.org/gems/bson_ext)
 * [bundler](http://rubygems.org/gems/bundler)
 * [curb](http://rubygems.org/gems/curb)
 * [htmlentities](http://rubygems.org/gems/htmlentities)
-* [nokogiri](http://rubygems.org/gems/nokogiri)
 * [json](http://rubygems.org/gems/json)
+* [nokogiri](http://rubygems.org/gems/nokogiri)

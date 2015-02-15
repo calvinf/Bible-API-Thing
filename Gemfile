@@ -1,6 +1,5 @@
 source "http://rubygems.org"
 gem "activerecord", "4.2.0"
-gem "bson_ext", "~> 1.11.1"
 gem "curb", "~> 0.7.18"
 gem "htmlentities"
 gem "json", "~> 1.7"

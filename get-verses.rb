@@ -1,12 +1,6 @@
 #!/usr/bin/env ruby
 
-# using bundler http://gembundler.com/
-require 'rubygems'
-require 'bundler/setup'
-Bundler.require(:default)
-
 # other includes
-require './api-key.rb'		# BIBLE_KEY
 require './BibleApi.rb'		# Bible API
 
 api = BibleApi.new

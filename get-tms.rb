@@ -1,15 +1,9 @@
 #!/usr/bin/env ruby
 
-# using bundler http://gembundler.com/
-require 'rubygems'
-require 'bundler/setup'
-Bundler.require(:default)
-
 # for options parsing
 require 'optparse'
 
 # other includes
-require './api-key.rb'		# BIBLE_KEY
 require './BibleApi.rb'	    # Bible API
 
 # Setup BibleApi to take options
