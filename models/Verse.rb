@@ -24,9 +24,6 @@ class Verse < ActiveRecord::Base
     # the verse_key
     validates :verse_key, :presence => true
 
-    # http://guides.rubyonrails.org/association_basics.html#polymorphic-associations
-    belongs_to :shareable, :polymorphic => true
-
     def to_s
         return "#{self.reference} (#{self.translation}): #{self.text}"
     end
@@ -44,7 +41,6 @@ unless Verse.table_exists?
             t.string :copyright
             t.string :verse_key
 
-            t.references :shareable, polymorphic: true, index: true
             t.timestamps null: false
         end
     end
