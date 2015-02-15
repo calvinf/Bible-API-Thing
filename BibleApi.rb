@@ -114,8 +114,12 @@ class BibleApi
         passage.css('sup').remove
 
         translation = passage.at_css('version').content
+
         reference = passage.at_css('display').content
+
         copyright = passage.at_css('copyright').content
+        copyright.strip!
+
         path = passage.at_css('path').content
 
         text = clean_text(passage.at_css('text').content)
