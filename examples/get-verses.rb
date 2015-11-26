@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # other includes
-require './BibleApi.rb'		# Bible API
+require '../BibleApi.rb'		# Bible API
 
 api = BibleApi.new
 
