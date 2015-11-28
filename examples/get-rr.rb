@@ -4,7 +4,7 @@
 require 'optparse'
 
 # other includes
-require '../BibleApi.rb'	    # Bible API
+require_relative '../BibleApi.rb'	    # Bible API
 
 # Setup BibleApi to take options
 options = {

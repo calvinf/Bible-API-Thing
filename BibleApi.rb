@@ -6,9 +6,9 @@ require 'bundler/setup'
 require 'htmlentities'
 require 'nokogiri'
 
-require './models/BibleSearch.rb' # Bible Search
-require './models/Records.rb' # ActiveRecord initialization
-require './models/Verse.rb' # Verse model
+require_relative './models/BibleSearch.rb' # Bible Search
+require_relative './models/Records.rb' # ActiveRecord initialization
+require_relative './models/Verse.rb' # Verse model
 
 class BibleApi
     # Constants
