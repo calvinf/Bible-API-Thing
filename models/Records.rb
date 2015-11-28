@@ -5,4 +5,4 @@ ActiveRecord::Base.establish_connection(
     :database => "bible-verse.db"
 )
 
-ActiveRecord::Base.logger = Logger.new(STDERR)
+# ActiveRecord::Base.logger = Logger.new(STDERR)

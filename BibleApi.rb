@@ -17,6 +17,7 @@ class BibleApi
 
     def initialize(opts = {})
         @options = {
+            :encode => false, # html encode
             :overwrite => false,
             :translations => ['eng-ESV']
         }.merge(opts)
@@ -140,24 +141,37 @@ class BibleApi
 
     def clean_text(passageText)
         text_html = Nokogiri::HTML(passageText)
-        text_html.xpath("//sup").remove
-        text_html.xpath("//h3").remove
+
+        # elements to remove
+        elements = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'sup']
+        elements.each do |elType|
+            # TODO is there a better xpath expression to use?
+            nodes = text_html.xpath "//#{elType}"
+            nodes.each do |node|
+                node.add_next_sibling(" ")
+                node.remove
+            end
+        end
 
         return cleanser(text_html.content)
     end
 
     def cleanser(text)
-        coder = HTMLEntities.new
+        # Sometimes we want it HTML encoded,
+        # but sometimes we don't.
+        if @options[:encode]
+            coder = HTMLEntities.new
+            text = coder.encode(text)
+        end
 
         # trim the leading/trailing whitespace, remove linebreaks,
         # remove tabs, remove excessive whitespace
-        text = coder.encode(text)
 
         # keep strip on its own line because it returns nil when
         # there is no change to the string (and you can't chain it)
         text.strip!
         text.gsub!(/[\n\t]/, ' ')
-        text.gsub!(/\s+/, " ")
+        text.gsub!(/\s+/, ' ')
 
         return text
     end

@@ -4,10 +4,11 @@
 require 'optparse'
 
 # other includes
-require_relative '../BibleApi.rb'	    # Bible API
+require_relative '../BibleApi.rb'
 
 # Setup BibleApi to take options
 options = {
+    :encode => false,
     :overwrite => false,
 
     # Recommendation: TMS has verses in both OT & NT. Pick translations with both.
@@ -26,8 +27,12 @@ options = {
 optparse = OptionParser.new do |opts|
     opts.banner = "Usage: $0 [options]"
 
-    opts.on( '-o', '--overwrite', 'Optional: replace and overwrite existing verses' ) do |overwrite|
+    opts.on( '-o', '--overwrite', 'Optional: replace and overwrite existing verses' ) do
         options[:overwrite] = true
+    end
+
+    opts.on( '--encode', 'Optional: enable HTML encoding of output content' ) do
+        options[:encode] = true
     end
 
     opts.on( '-h', '--help', 'Display help screen' ) do
