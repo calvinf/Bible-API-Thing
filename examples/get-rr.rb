@@ -16,7 +16,9 @@ options = {
         'eng-CEV', # Contemporary English Version
         'eng-ESV', # English Standard Version
         'eng-KJV', # King James Version
+        'eng-MSG', # The Message
         'eng-NASB', # New American Standard Bible
+        'spa-RVR1960' # Biblia Reina Valera 1960
     ]
 }
 

@@ -15,7 +15,6 @@ options = {
     :translations => [
         'eng-CEV', # Contemporary English Version
         'eng-ESV', # English Standard Version
-        'eng-GNTD', # Good News
         'eng-KJV', # King James Version
         'eng-MSG', # The Message
         'eng-NASB', # New American Standard Bible
