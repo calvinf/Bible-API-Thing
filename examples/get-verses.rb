@@ -13,7 +13,12 @@ options = {
         'eng-CEV', # Contemporary English Version
         'eng-ESV', # English Standard Version
         'eng-KJV', # King James Version
+        'eng-MSG', # The Message
+        'eng-NIV', # New International Version
+        'eng-NLT', # New Living Translation
         'eng-NASB', # New American Standard Bible
+        'spa-RVR1960', # Biblia Reina Valera 1960
+        'vie-RVV11' # Revised Vietnamese Version Bible
     ]
 }
 

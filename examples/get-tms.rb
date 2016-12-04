@@ -18,7 +18,10 @@ options = {
         'eng-KJV', # King James Version
         'eng-MSG', # The Message
         'eng-NASB', # New American Standard Bible
-        'spa-RVR1960' # Biblia Reina Valera 1960
+        'eng-NIV', # New International Version
+        'eng-NLT', # New Living Translation
+        'spa-RVR1960', # Biblia Reina Valera 1960
+        'vie-RVV11' # Revised Vietnamese Version Bible
     ]
 }
 
