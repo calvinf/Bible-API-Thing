@@ -33,7 +33,7 @@ class BibleSearch
     end
 
     def get_passages_url
-        return API_BASE + '/' + @versions.join(',') + '/passages.xml'
+        return API_BASE + @versions.join(',') + '/passages.xml'
     end
 
     def get_search_result(url)
