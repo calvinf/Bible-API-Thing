@@ -24,7 +24,8 @@ options = {
         'eng-ESV', # English Standard Version
         'eng-KJV', # King James Version
         'eng-MSG',
-        'eng-NASB'
+        'eng-NASB',
+        'spa-RVR1960'
     ]
 }
 

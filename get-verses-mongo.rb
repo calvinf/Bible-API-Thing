@@ -37,11 +37,22 @@ end
 
 # Setup BibleApi to take options for Mongo connection
 bibleApiOpts = {
-    :useMongo => true
+    :useMongo => true,
+    :overwrite => false,
+
+    # Recommendation: TMS has verses in both OT & NT. Pick translations with both.
+    :translations => [
+        'eng-CEV',
+        'eng-ESV', # English Standard Version
+        'eng-KJV', # King James Version
+        'eng-MSG',
+        'eng-NASB',
+        'spa-RVR1960'
+    ]
 }
 bibleApi = BibleApi.new(bibleApiOpts)
 
-if(ARGV.size < 1) 
+if(ARGV.size < 1)
     print "Please pass in a file\n"
     exit
 end
@@ -51,7 +62,7 @@ if(ARGV.size > 1)
     exit
 end
 
-File.open(ARGV[0]) do |file| 
+File.open(ARGV[0]) do |file|
     pack = Pack.new(options[:name])
     verses = []
     file.readlines.each do |line|
